@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package (no dependencies to install)
+        run: pip install -e ".[dev]"
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+
+      - name: Verify zero runtime dependencies
+        shell: bash  # heredoc below is bash syntax; Windows defaults to pwsh
+        run: |
+          # agentcassette must ship with zero dependencies.
+          # This step fails the build if any non-stdlib import is introduced.
+          python - <<'EOF'
+          import sys, pathlib, ast
+
+          # sys.stdlib_module_names is Python 3.10+. On 3.9 the rest of the
+          # matrix provides coverage, so skip this static check there.
+          if not hasattr(sys, "stdlib_module_names"):
+              print("Skipping static import check on Python < 3.10")
+              sys.exit(0)
+
+          src = pathlib.Path("src/agentcassette")
+          stdlib_modules = set(sys.stdlib_module_names)
+
+          third_party = []
+          for py_file in src.rglob("*.py"):
+              tree = ast.parse(py_file.read_text())
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Import):
+                      names = [alias.name for alias in node.names]
+                  elif isinstance(node, ast.ImportFrom):
+                      # Relative imports (level > 0) are always intra-package.
+                      if node.level:
+                          continue
+                      names = [node.module or ""]
+                  else:
+                      continue
+                  for name in names:
+                      top = name.split(".")[0]
+                      if top and top not in stdlib_modules and top != "agentcassette":
+                          third_party.append(f"{py_file}: {top}")
+
+          if third_party:
+              print("FAIL: third-party imports detected:")
+              for item in third_party:
+                  print(f"  {item}")
+              sys.exit(1)
+          print("OK: zero third-party dependencies confirmed")
+          EOF
