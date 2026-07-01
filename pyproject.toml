@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agentcassette"
-version = "0.1.0"
+version = "0.2.0"
 description = "Deterministic agent test recorder and replayer. Record live runs, replay as mocks. Zero dependencies."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -36,6 +36,12 @@ dependencies = []  # Zero external dependencies — pure Python stdlib only
 
 [project.optional-dependencies]
 dev = ["pytest", "hatch"]
+pytest = ["pytest>=7"]  # only needed to use the optional pytest plugin
+
+# The pytest plugin ships inside the package but is loaded only by pytest via
+# this entry point — importing agentcassette itself stays dependency-free.
+[project.entry-points.pytest11]
+agentcassette = "agentcassette.pytest_plugin"
 
 [project.urls]
 Homepage = "https://github.com/aenealabs/agentcassette"
