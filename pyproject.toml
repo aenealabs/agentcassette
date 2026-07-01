@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [
-    { name = "LaVon Rutledge", email = "32437530+lavrut@users.noreply.github.com" }
+    { name = "LaVon Rutledge" }
 ]
 keywords = [
     "llm", "ai-agents", "testing", "replay", "mocking",
