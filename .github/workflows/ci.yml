@@ -53,6 +53,10 @@ jobs:
 
           third_party = []
           for py_file in src.rglob("*.py"):
+              # The optional pytest plugin is loaded only under pytest and is
+              # the one file permitted to import a third-party module (pytest).
+              if py_file.name == "pytest_plugin.py":
+                  continue
               tree = ast.parse(py_file.read_text())
               for node in ast.walk(tree):
                   if isinstance(node, ast.Import):

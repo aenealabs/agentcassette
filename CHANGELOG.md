@@ -7,6 +7,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-30
+
+### Added
+- **pytest plugin** (auto-registered via a `pytest11` entry point) — a `cassette` fixture that records on the first run and replays afterwards, a `--record-mode` option (`once` / `none` / `all`), and a `@pytest.mark.cassette(path=..., record_mode=..., strict=..., redact=...)` marker for per-test overrides. Cassettes default to `<test dir>/cassettes/<test name>.json`.
+- `pytest` optional-dependency extra (`pip install "agentcassette[pytest]"`). Importing `agentcassette` never imports pytest, so the library stays zero-dependency.
+- 6 plugin tests using pytest's `pytester`
+
 ## [0.1.0] - 2026-06-30
 
 ### Added
@@ -22,5 +29,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Zero external dependencies — pure Python stdlib (3.9+)
 - 44 unit tests covering sync/async record/replay, divergence, cassette inspection, diffing, token accounting, and error handling
 
-[Unreleased]: https://github.com/aenealabs/agentcassette/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/aenealabs/agentcassette/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/aenealabs/agentcassette/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/aenealabs/agentcassette/releases/tag/v0.1.0

@@ -126,6 +126,51 @@ for d in player.divergences:
     print(d["index"], d["expected"], "->", d["actual"])
 ```
 
+## Using with pytest
+
+agentcassette ships an optional pytest plugin (auto-registered — no config). Request the `cassette` fixture: it **records on the first run**, then **replays** on every run after. No cassette to manage by hand.
+
+```python
+import agentcassette
+
+call_model = agentcassette.intercept(call_model, kind="llm")
+
+def test_flight_search(cassette):
+    result = my_agent.run("Find flights to NYC under $300")
+    assert result.ok
+```
+
+Cassettes default to `<test dir>/cassettes/<test name>.json`.
+
+**Record modes** — via `--record-mode`:
+
+| Mode | Behavior |
+|---|---|
+| `once` *(default)* | Replay if a cassette exists, otherwise record it |
+| `none` | Replay only; **fail** if the cassette is missing (use in CI to forbid accidental recording) |
+| `all` | Always re-record, overwriting the cassette |
+
+```bash
+pytest                     # record missing cassettes, replay the rest
+pytest --record-mode=all   # re-record everything (e.g. after an intended change)
+pytest --record-mode=none  # CI: fail if any cassette is missing
+```
+
+**Per-test overrides** with the `cassette` marker:
+
+```python
+import pytest
+
+@pytest.mark.cassette(record_mode="all", strict=True,
+                      redact=["api_key"], path="tapes/search.json")
+def test_search(cassette):
+    ...
+```
+
+With `strict=True`, a replayed call that diverges from the recording fails the test — turning the cassette into a regression guard. The fixture yields the active `Recorder` (recording) or `Player` (replaying) for inspection.
+
+The plugin needs pytest (`pip install "agentcassette[pytest]"`, or it's in `[dev]`). Importing `agentcassette` itself never imports pytest, so the library stays zero-dependency.
+
 ## Inspecting cassettes
 
 ```python
